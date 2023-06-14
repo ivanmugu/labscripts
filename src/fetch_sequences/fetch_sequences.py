@@ -8,10 +8,10 @@ from pathlib import Path
 
 from Bio import Entrez, SeqIO
 
-from labscripts.utils.utils import (
+from utils.utils import (
     check_argparse_mandatory_arguments, check_infile, check_output_folder
 )
-from labscripts.extract_sequences.extract_sequences import (
+from extract_sequences.extract_sequences import (
     extract_fasta_files, extract_gb_files
 )
 
@@ -42,14 +42,13 @@ def parse_command_line_input() -> UserInput:
     # Initate parser
     parser = argparse.ArgumentParser(
         add_help=False,
-        prog='fetch_sequences.py',
+        prog='fetch_sequences',
         formatter_class=argparse.RawTextHelpFormatter,
         description='Download DNA sequences from the nuccore database.'
     )
     # Make arguments groups.
     helper = parser.add_argument_group('Help')
     required = parser.add_argument_group('Required')
-    print('type of required group:', type(required))
     optional = parser.add_argument_group('Optional')
     # Make help argument.
     helper.add_argument(
@@ -58,31 +57,32 @@ def parse_command_line_input() -> UserInput:
     )
     # Make required arguments.
     required.add_argument(
-        '--input', metavar='',
+        '-i', '--input', required=True,
         help='Path to txt file with list of accession numbers.'
     )
     required.add_argument(
-        '--type', metavar='', help=(
+        '-t', '--type', required=True, help=(
             'Sequence type to retrieve.\nOptions: `gb` or `fasta`.'
         )
     )
     required.add_argument(
-        '--email', metavar='', help='Provide email to NCBI.'
+        '-e', '--email', required=True, help='Provide email to NCBI.'
     )
     # Make optional argument.
     optional.add_argument(
-        '--output-folder', metavar='',
-        help='Path to output folder.\nDefault current working directory.'
+        '-o', '--output_folder',
+        help='Path to output folder.\nDefault: current working directory.'
     )
     optional.add_argument(
-        '--output-name', metavar='',
+        '-n', '--output_name',
         help=(
             'Name of the output file holding all the retrieved sequences.\n' +
-            'Default `sequences.fasta` or `sequences.gb`.'
+            'Default: depending the sequence type the default name will\n' +
+            '`sequences.fasta` or `sequences.gb`.'
         )
     )
     optional.add_argument(
-        '--split-sequences', action='store_true',
+        '-s', '--split_sequences', action="store_true",
         help=(
             'Save sequences as independent files.\n' +
             'If not provided, the sequences will be concatenated in one file.'
@@ -232,7 +232,7 @@ def main():
     Entrez.email = user_input.email
     # Make batches of accession numbers.
     batches = make_acc_number_batches(
-        input_file=user_input.infile, batch_size=3
+        input_file=user_input.infile, batch_size=10
     )
     print('\nConecting to nuccore database to donwload sequences.\n')
     # fetch sequences.

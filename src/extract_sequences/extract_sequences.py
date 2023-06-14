@@ -59,8 +59,6 @@ def parse_command_line_input() -> UserInput:
     )
     # Parse command line arguments and check their correctness.
     user_input = parse_command_line_arguments(parser.parse_args())
-    # Make sure user provided all required arguments.
-    check_if_user_provided_required_arguments(user_input)
 
     return user_input
 
@@ -120,7 +118,7 @@ def check_output_folder(output_folder: Union[str, None]) -> Path:
     if not output_folder.exists():
         sys.exit(f"Error: {output_folder} does not exist")
     elif not output_folder.is_dir():
-        sys.exit(f"Error: {output_folder} does not exist")
+        sys.exit(f"Error: {output_folder} is not a directory")
     else:
         return output_folder
 

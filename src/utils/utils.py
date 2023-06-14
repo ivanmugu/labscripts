@@ -2,18 +2,18 @@
 import sys
 from pathlib import Path
 from typing import Union
-from argparse import Namespace
+from argparse import Namespace, _ArgumentGroup
 
 
 def check_argparse_mandatory_arguments(
-        arguments: Namespace, mandatory_group_name: str
+        arguments: Namespace, mandatory_group_name: _ArgumentGroup
     ) -> None:
     """Check if user provided the argparse mandatory arguments."""
-    # Retrieve a list of the mandatory arguments
+    # Retrieve a list of the mandatory arguments.
     mandatory_arguments = [
         action.dest for action in mandatory_group_name._group_actions
     ]
-    # Iterate over list of aguments to check the value of the attribute
+    # Iterate over list of aguments to check the value of the attribute.
     for arg in mandatory_arguments:
         if not getattr(arguments, arg):
             sys.exit(f'Error: the `{arg}` argument is mandatory')

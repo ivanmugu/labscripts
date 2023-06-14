@@ -1,0 +1,20 @@
+Metadata-Version: 2.1
+Name: labscripts
+Version: 0.1.1
+Summary: Useful scripts for working with sequencing data
+Author-email: Ivan Muñoz-Gutierrez <ivan.munoz.gutierrez@gmail.com>
+License: MIT License
+Project-URL: Homepage, https://github.com/ivanmugu/labscripts
+Keywords: NCBI,Sequencing databases,Sequencing data,Biopython
+Classifier: Programming Language :: Python
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Intended Audience :: Science/Research
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# labscripts
+
+Useful scripts for working with sequencing data

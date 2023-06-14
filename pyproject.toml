@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "labscripts"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     {name = "Ivan Muñoz-Gutierrez", email = "ivan.munoz.gutierrez@gmail.com"},
 ]
@@ -23,7 +23,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies = [
-    "biopython==1.81",
+    "biopython",
+    "cgecore",
+    "tabulate",
 ]
 
 [project.urls]
@@ -32,3 +34,4 @@ dependencies = [
 [project.scripts]
 extract_sequences = "extract_sequences.__main__:main"
 fetch_sequences = "fetch_sequences.__main__:main"
+mlst = "mlst.__main__:main"
