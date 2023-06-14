@@ -397,7 +397,8 @@ def parse_command_line():
     )
     optional.add_argument("-q", "--quiet", action="store_true")
     optional.add_argument(
-        "-matrix", "--matrix", dest="kma_matrix", action='store_true',
+        "-ma", # <- this argument was written as -matrix which is wrong (IMG)
+        "--matrix", dest="kma_matrix", action='store_true',
         default=False,
         help=(
             "Gives the counts all all called bases at each position in\n" +
@@ -406,7 +407,7 @@ def parse_command_line():
         )
     )
     optional.add_argument(
-        "-st", "--save_tmp",action='store_true', default=False,
+        "-st", "--save_tmp", action='store_true', default=False,
         help=(
             "If set the tmp folder will be saved - deleted by default"
         )
@@ -423,13 +424,56 @@ def parse_command_line():
     args = parser.parse_args()
     return args
 
+# =============================================================================
+# Modified by Ivan Munoz Gutierrez
+# Class to store input to perform mlst.
+# =============================================================================
+class InputMlstyper:
+    """Class to store input to perform mlst."""
+    def __init__(
+            self, infile=None, species=None, outdir=None, database=None,
+            tmp_dir=None, method_path=None, extented_output=None, quiet=None,
+            kma_matrix=None, save_tmp=None, depth=None
+    ):
+        self.infile = infile
+        self.species = species
+        self.outdir = outdir
+        self.database = database
+        self.tmp_dir = tmp_dir
+        self.method_path = method_path
+        self.extented_output = extented_output
+        self.quiet = quiet
+        self.kma_matrix = kma_matrix
+        self.save_tmp = save_tmp
+        self.depth = depth
+
+def get_input_for_mlstyper(args):
+    """Read args from arparse and fill InputMlstyper."""
+    # Intiate InputMlstyper
+    input_mlstyper = InputMlstyper()
+    # Fill the instance variables of input_mlstyper
+    input_mlstyper.infile = args.infile
+    input_mlstyper.species = args.species
+    input_mlstyper.outdir = args.outdir
+    input_mlstyper.database = args.database
+    input_mlstyper.tmp_dir = args.tmp_dir
+    input_mlstyper.method_path = args.method_path
+    input_mlstyper.extented_output = args.extented_output
+    input_mlstyper.quiet = args.quiet
+    input_mlstyper.kma_matrix = args.kma_matrix
+    input_mlstyper.save_tmp = args.save_tmp
+    input_mlstyper.depth = args.depth
+
+    return input_mlstyper
+
 
 # =============================================================================
 # Modified by Ivan Munoz Gutierrez
 # The rest of the script is encapsulated in a function called mlstyper.
 # =============================================================================
-def mlstyper(args):
-    if args.quiet:
+def mlstyper(input_mlstyper):
+    print(input_mlstyper.__dict__)
+    if input_mlstyper.quiet:
         f = open('/dev/null', 'w')
         sys.stdout = f
 
@@ -437,16 +481,16 @@ def mlstyper(args):
     #TODO what are the clonal complex data used for??
 
     # TODO error handling
-    infile = args.infile
+    infile = input_mlstyper.infile
     # Check that outdir is an existing dir...
-    outdir = os.path.abspath(args.outdir)
-    species = args.species
-    database = os.path.abspath(args.database)
+    outdir = os.path.abspath(input_mlstyper.outdir)
+    species = input_mlstyper.species
+    database = os.path.abspath(input_mlstyper.database)
     #creating unique tmp_dir
-    tmp_dir = tempfile.mkdtemp(prefix='tmp_', dir=args.tmp_dir)
+    tmp_dir = tempfile.mkdtemp(prefix='tmp_', dir=input_mlstyper.tmp_dir)
     # Check if method path is executable
-    method_path = args.method_path
-    extented_output = args.extented_output
+    method_path = input_mlstyper.method_path
+    extented_output = input_mlstyper.extented_output
 
     min_cov = 0.6	   # args.coverage
     threshold = 0.95 # args.identity
@@ -458,7 +502,7 @@ def mlstyper(args):
 
     config_file = open(database + "/config","r")
 
-    if (args.kma_matrix):
+    if (input_mlstyper.kma_matrix):
         extra_args = "-matrix"
     else:
         extra_args = None
@@ -520,7 +564,7 @@ def mlstyper(args):
     else:
         sys.exit("Input file must be fastq or fasta format, not " + file_format)
 
-    if not args.save_tmp:
+    if not input_mlstyper.save_tmp:
         shutil.rmtree(tmp_dir)
 
     results      = method_obj.results
@@ -562,10 +606,10 @@ def mlstyper(args):
         if file_format == "fastq":
             depth = float(locus_hit["depth"])
         else:
-            depth = args.depth
+            depth = input_mlstyper.depth
 
         # Check for required depth
-        if args.depth > depth:
+        if input_mlstyper.depth > depth:
             continue
 
         # Check for perfect hits
@@ -642,7 +686,7 @@ def mlstyper(args):
             if key in allele_results[locus] or (key == "alternative_hit" and value != {}):
                 allele_results[locus][key] = value
 
-    userinput = {"filename":args.infile, "species":args.species, "organism":organism,"file_format":file_format}
+    userinput = {"filename":input_mlstyper.infile, "species":input_mlstyper.species, "organism":organism,"file_format":file_format}
     run_info = {"date":date, "time":time_}#, "database":{"remote_db":remote_db, "last_commit_hash":head_hash}}
     server_results = {"sequence_type":st, "allele_profile": allele_results,
                                 "nearest_sts":nearest_sts, "notes":note}
@@ -772,9 +816,10 @@ def mlstyper(args):
         table_file.close()
         result_file.close()
 
-    if args.quiet:
+    if input_mlstyper.quiet:
         f.close()
 
 if __name__ == "__main__":
     args = parse_command_line()
-    mlstyper(args)
+    input_mlstyper = get_input_for_mlstyper(args)
+    mlstyper(input_mlstyper)
