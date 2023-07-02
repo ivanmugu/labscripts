@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "labscripts"
-version = "0.1.4"
+version = "0.1.5"
 authors = [
     {name = "Ivan Muñoz-Gutierrez", email = "ivan.munoz.gutierrez@gmail.com"},
 ]
@@ -35,4 +35,3 @@ dependencies = [
 extract_sequences = "labscripts.extract_sequences.__main__:main"
 fetch_sequences = "labscripts.fetch_sequences.__main__:main"
 mlst = "labscripts.mlst.__main__:main"
-seqtyper = "labscripts.seqtyper.__main__:main"

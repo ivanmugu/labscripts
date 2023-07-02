@@ -9,7 +9,6 @@ import sys
 from Bio import SeqIO
 
 from labscripts import mlst
-from labscripts import seqtyper
 from labscripts.mlst.mlst import InputMlstyper, mlstyper
 
 _species_options = {
@@ -339,8 +338,7 @@ def get_sequence_types() -> None:
     mlst_package = resources.files(mlst)
     mlst_db = mlst_package / 'mlst_db'
     # Get path to tmp directory
-    run_mlst_path = resources.files(seqtyper)
-    path_tmp_dir = run_mlst_path / 'tmp'
+    path_tmp_dir = mlst_package / 'tmp'
     # Get user input
     args = parse_command_line()
     # Path to fasta file
