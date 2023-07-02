@@ -305,7 +305,7 @@ def text_table(headers, rows, empty_replace='-'):
 
 # =============================================================================
 # Modified by IMG.
-# Create a funtion to parse command line arguments.
+# Create a function to parse command line arguments.
 # =============================================================================
 def parse_command_line():
     parser = argparse.ArgumentParser(
@@ -460,7 +460,6 @@ class InputMlstyper:
 # The rest of the script is encapsulated in a function called mlstyper.
 # =============================================================================
 def mlstyper(input_mlstyper):
-    print(input_mlstyper.__dict__)
     if input_mlstyper.quiet:
         f = open('/dev/null', 'w')
         sys.stdout = f
@@ -805,6 +804,8 @@ def mlstyper(input_mlstyper):
 
     if input_mlstyper.quiet:
         f.close()
+        # redirect stdout to sys.__stdout__
+        sys.stdout = sys.__stdout__
 
 if __name__ == "__main__":
     args = parse_command_line()

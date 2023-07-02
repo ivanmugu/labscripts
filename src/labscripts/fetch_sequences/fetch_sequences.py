@@ -8,10 +8,10 @@ from pathlib import Path
 
 from Bio import Entrez, SeqIO
 
-from utils.utils import (
+from labscripts.utils.utils import (
     check_argparse_mandatory_arguments, check_infile, check_output_folder
 )
-from extract_sequences.extract_sequences import (
+from labscripts.extract_sequences.extract_sequences import (
     extract_fasta_files, extract_gb_files
 )
 

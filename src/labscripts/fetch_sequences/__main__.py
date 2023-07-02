@@ -1,4 +1,4 @@
-from fetch_sequences import fetch_sequences
+from labscripts.fetch_sequences import fetch_sequences
 
 def main():
     fetch_sequences.main()
