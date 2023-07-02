@@ -167,7 +167,10 @@ def parse_command_line():
         prog="seqtyper",
         formatter_class=argparse.RawTextHelpFormatter,
         description="Run mlst with one or more FASTA sequences.",
-        # epilog=f"List of species options:\n{', '.join(_species_options)}"
+        epilog=(
+            "Currently, the script works only with FASTA sequences.\n" +
+            "Get more help by running `mlst run -h` or `mlst list_sp -h`."
+        )
     )
     helper = parser.add_argument_group("Help")
     helper.add_argument(
@@ -181,9 +184,17 @@ def parse_command_line():
     # Create subparser for the 'run' seqtyper command
     run = subparsers.add_parser(
         'run', help='Run seqtyper', add_help=False,
+        description="mlst runner.",
         formatter_class=argparse.RawTextHelpFormatter,
         )
-    subparsers.add_parser('list_sp', help='List species options')
+    # Create subparser to list species options.
+    subparsers.add_parser(
+        'list_sp',
+        description=(
+            "List species options with valid input for `--species` flag."
+        ),
+        help='List species options'
+    )
 
     # -- SUBPARSER run --------------------------------------------------------
     # Make arguments groups.
@@ -198,8 +209,9 @@ def parse_command_line():
     )
     # Required arguments.
     run_required.add_argument(
-        "-i", "--input", nargs="+", 
-        required=True,
+        # Note: if planning to use reads, include `nargas=+` and do the
+        # corresponding changes in the run_mlstyper functions.
+        "-i", "--input", required=True,
         help=("Path to file with FASTA sequence(s).")
     )
     run_required.add_argument(
@@ -240,10 +252,10 @@ def check_command_line_arguments(args) -> None:
             print(f"{key}: {value}.", end=" ")
         print()
         sys.exit(0)
-    if not Path(args.input[0]).exists():
-        sys.exit(f'Error: {args.input[0]} does not exists')
-    if not Path(args.input[0]).is_file():
-        sys.exit(f'Error: {args.input[0]} is not a file')
+    if not Path(args.input).exists():
+        sys.exit(f'Error: {args.input} does not exists')
+    if not Path(args.input).is_file():
+        sys.exit(f'Error: {args.input} is not a file')
     if not Path(args.outdir).exists():
         sys.exit(f'Error: {args.outdir} does not exists')
     if not Path(args.outdir).is_dir():
@@ -278,7 +290,7 @@ def run_mlstyper_single_fasta(
     ) -> None:
     """Run mlst with single fasta sequence."""
     # Get record id.
-    record = SeqIO.read(input_mlstyper.infile[0], 'fasta')
+    record = SeqIO.read(input_mlstyper.infile, 'fasta')
     record_id = record.id
     # Run mlst.
     mlstyper(input_mlstyper)
@@ -300,7 +312,7 @@ def run_mlstyper_multiple_fasta(
     ) -> None:
     """Run mlst with a file with multiple fasta sequences."""
     # Save path to infile.
-    path_infile = input_mlstyper.infile[0]
+    path_infile = input_mlstyper.infile
     # Headers for results.csv
     fieldnames = ['id', 'sequence_type']
     # open results.csv to save results.
@@ -342,7 +354,7 @@ def get_sequence_types() -> None:
     # Get user input
     args = parse_command_line()
     # Path to fasta file
-    infile = args.input[0]
+    infile = args.input
     # Initialize InputMlstyper
     input_mlstyper = InputMlstyper(
         infile=args.input,
