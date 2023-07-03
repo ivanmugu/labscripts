@@ -31,6 +31,7 @@ import json, gzip
 from tabulate import tabulate
 
 from labscripts import mlst
+from labscripts.mlst.mlst_utils import InputMlstyper
 
 def get_read_filename(infiles):
     ''' Infiles must be a list with 1 or 2 input files.
@@ -422,44 +423,19 @@ def parse_command_line():
     args = parser.parse_args()
     return args
 
-# =============================================================================
-# Modified by Ivan Munoz Gutierrez
-# Class to store input to perform mlst.
-# =============================================================================
-class InputMlstyper:
-    """Class to store input to perform mlst."""
-    def __init__(
-            self,
-            infile: Path,
-            species: str,
-            database: Path,
-            tmp_dir: Path,
-            method_path: Union[Path, None],
-            outdir: Path = Path.cwd(),
-            extented_output: bool = True,
-            quiet: bool = True,
-            kma_matrix: bool = False,
-            save_tmp: bool = False,
-            depth: float = 5.0
-    ):
-        self.infile = infile
-        self.species = species
-        self.database = database
-        self.tmp_dir = tmp_dir
-        self.method_path = method_path
-        self.outdir = outdir
-        self.extented_output = extented_output
-        self.quiet = quiet
-        self.kma_matrix = kma_matrix
-        self.save_tmp = save_tmp
-        self.depth = depth
-
 
 # =============================================================================
 # Modified by Ivan Munoz Gutierrez
 # The rest of the script is encapsulated in a function called mlstyper.
 # =============================================================================
-def mlstyper(input_mlstyper):
+def mlstyper(input_mlstyper: InputMlstyper) -> None:
+    """Main fuction to perform mlst.
+
+    parameters
+    ----------
+    input_mlstyper : InputMlstyper object
+        Class to store input for msltyper
+    """
     if input_mlstyper.quiet:
         f = open('/dev/null', 'w')
         sys.stdout = f
@@ -468,8 +444,9 @@ def mlstyper(input_mlstyper):
 
     # TODO error handling
     infile = input_mlstyper.infile
+
     # Check that outdir is an existing dir...
-    outdir = os.path.abspath(input_mlstyper.outdir)
+    outdir = os.path.abspath(input_mlstyper.outdir_mlstyper)
     species = input_mlstyper.species
     database = os.path.abspath(input_mlstyper.database)
     #creating unique tmp_dir
@@ -815,7 +792,7 @@ if __name__ == "__main__":
         database=args.database,
         tmp_dir=args.tmp_dir,
         method_path=args.method_path,
-        outdir=args.outdir,
+        outdir_mlstyper=args.outdir,
         extented_output=args.extented_output,
         quiet=args.quiet,
         kma_matrix=args.kma_matrix,

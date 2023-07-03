@@ -5,161 +5,14 @@ import subprocess
 import json
 import csv
 import sys
+import os
 
 from Bio import SeqIO
 
 from labscripts import mlst
-from labscripts.mlst.mlst import InputMlstyper, mlstyper
+from labscripts.mlst.mlst_utils import SpeciesOptions, InputMlstyper
+from labscripts.mlst.mlst_cge import mlstyper
 
-_species_options = {
-    "Achromobacter": "achromobacter",
-    "Acinetobacter baumannii": "abaumannii, abaumannii_2",
-    "Aeromonas": "aeromonas",
-    "Aggregatibacter actinomycetemcomitans": "aactinomycetemcomitans",
-    "Anaplasma phagocytophilum": "aphagocytophilum",
-    "Arcobacter": "arcobacter",
-    "Aspergillus fumigatus": "afumigatus",
-    "Bacillus cereus": "bcereus",
-    "Bacillus licheniformis": "blicheniformis",
-    "Bacillus subtilis": "bsubtilis",
-    "Bacteroides fragilis": "bfragilis",
-    "Bartonella bacilliformis": "bbacilliformis",
-    "Bartonella henselae": "bhenselae",
-    "Bartonella washoensis": "bwashoensis",
-    "Bordetella": "bordetella",
-    "Borrelia": "borrelia",
-    "Brachyspira": "brachyspira",
-    "Brachyspira hampsonii": "bhampsonii",
-    "Brachyspira hyodysenteriae": "bhyodysenteriae",
-    "Brachyspira pilosicoli": "bpilosicoli",
-    "Brucella intermedia": "bintermedia",
-    "Brucella": "brucella",
-    "Burkholderia cepacia": "bcepacia",
-    "Burkholderia pseudomallei": "bpseudomallei",
-    "Campylobacter concisus": "cconcisus",
-    "Campylobacter fetus": "cfetus",
-    "Campylobacter helveticus": "chelveticus",
-    "Campylobacter hyointestinalis": "chyointestinalis",
-    "Campylobacter insulaenigrae": "cinsulaenigrae",
-    "Campylobacter jejuni": "cjejuni",
-    "Campylobacter lanienae": "clanienae",
-    "Campylobacter lari": "clari",
-    "Campylobacter sputorum": "csputorum",
-    "Campylobacter upsaliensis": "cupsaliensis",
-    "Candida albicans": "calbicans",
-    "Candida glabrata": "cglabrata",
-    "Candida krusei": "ckrusei",
-    "Candida tropicalis": "ctropicalis",
-    "Candidatus liberibacter": "cliberibacter",
-    "Carnobacterium maltaromaticum": "cmaltaromaticum",
-    "Citrobacter freundii": "cfreundii",
-    "Chlamydiales": "chlamydiales",
-    "Clostridium botulinum": "cbotulinum",
-    "Clostridium difficile": "cdifficile",
-    "Clostridium perfringens": "cperfringens",
-    "Clostridium septicum": "csepticum",
-    "Clonorchis sinensis": "csinensis",
-    "Corynebacterium diphtheriae": "cdiphtheriae",
-    "Cronobacter": "cronobacter",
-    "Cutibacterium acnes": "cacnes",
-    "Dichelobacter nodosus": "dnodosus",
-    "Edwardsiella": "edwardsiella",
-    "Enterobacter cloacae": "ecloacae",
-    "Enterococcus faecalis": "efaecalis",
-    "Enterococcus faecium": "efaecium",
-    "Escherichia coli": "ecoli, ecoli_2",
-    "Flavobacterium psychrophilum": "fpsychrophilum",
-    "Gallibacterium anatis": "ganatis",
-    "Glaesserella parasuis": "gparasuis",
-    "Geotrichum": "geotrichum",
-    "Helicobacter cinaedi": "hcinaedi",
-    "Helicobacter pylori,": "hpylori",
-    "Helicobacter suis": "hsuis",
-    "Haemophilus influenzae": "hinfluenzae",
-    "Kingella kingae": "kkingae",
-    "Klebsiella aerogenes": "kaerogenes",
-    "Klebsiella oxytoca": "koxytoca", 
-    "Klebsiella pneumoniae": "kpneumoniae", 
-    "Kudoa septempunctata": "kseptempunctata", 
-    "Lactococcus lactis": "llactis",
-    "Leptospira": "leptospira, leptospira_2, leptospira_3",
-    "Ligilactobacillus salivarius": "lsalivarius",
-    "Listeria monocytogenes": "lmonocytogenes",
-    "Macrococcus caseolyticus": "mcaseolyticus",
-    "Mammaliicoccus sciuri": "msciuri",
-    "Mannheimia haemolytica": "mhaemolytica",
-    "Melissococcus plutonius": "mplutonius",
-    "Microsporum canis": "mcanis",
-    "Moraxella catarrhalis": "mcatarrhalis",
-    "Mycobacteria": "mycobacteria",
-    "Mycobacterium bovis": "mbovis",
-    "Mycobacterium massiliense": "mmassiliense",
-    "Mycobacteroides abscessus": "mabscessus",
-    "Mycoplasma agalactiae": "magalactiae",
-    "Mycoplasma anserisalpingitidis": "manserisalpingitidis",
-    "Mycoplasma flocculare": "mflocculare",
-    "Mycoplasma gallisepticum": "mgallisepticum, mgallisepticum_2",
-    "Mycoplasma hominis": "mhominis",
-    "Mycoplasma hyopneumoniae": "mhyopneumoniae",
-    "Mycoplasma hyorhinis": "mhyorhinis",
-    "Mycoplasma iowae": "miowae",
-    "Mycoplasma pneumoniae": "mpneumoniae",
-    "Mycoplasma synoviae": "msynoviae",
-    "Neisseria": "neisseria",
-    "Orientia tsutsugamushi": "otsutsugamushi",
-    "Ornithobacterium rhinotracheale": "orhinotracheale",
-    "Paenibacillus larvae": "plarvae",
-    "Pasteurella multocida": "pmultocida, pmultocida_2",
-    "Pediococcus pentosaceus": "ppentosaceus",
-    "Photobacterium damselae": "pdamselae",
-    "Piscirickettsia salmonis": "psalmonis",
-    "Porphyromonas gingivalis": "pgingivalis",
-    "Propionibacterium acnes": "pacnes",
-    "Pseudomonas aeruginosa": "paeruginosa",
-    "Pseudomonas fluorescens": "pfluorescens",
-    "Pseudomonas putida": "pputida",
-    "Rhodococcus": "rhodococcus",
-    "Riemerella anatipestifer": "ranatipestifer",
-    "Salmonella enterica": "senterica",
-    "Shewanella": "shewanella",
-    "Sinorhizobium": "sinorhizobium",
-    "Staphylococcus aureus": "saureus",
-    "Staphylococcus epidermidis": "sepidermidis",
-    "Staphylococcus haemolyticus": "shaemolyticus",
-    "Staphylococcus hominis": "shominis",
-    "Staphylococcus lugdunensis": "slugdunensis",
-    "Staphylococcus pseudintermedius": "spseudintermedius",
-    "Stenotrophomonas maltophilia": "smaltophilia",
-    "Streptococcus agalactiae": "sagalactiae",
-    "Streptococcus bovis": "sbovis",
-    "Streptococcus canis": "scanis",
-    "Staphylococcus chromogenes": "schromogenes",
-    "Streptococcus dysgalactiae": "sdysgalactiae",
-    "Streptococcus gallolyticus": "sgallolyticus",
-    "Streptococcus oralis": "soralis",
-    "Streptococcus pneumoniae": "spneumoniae",
-    "Streptococcus pyogenes": "spyogenes",
-    "Streptococcus suis": "ssuis",
-    "Syspastospora parasitica":"sparasitica",
-    "Streptococcus thermophilus": "sthermophilus, sthermophilus_2",
-    "Streptococcus uberis": "suberis",
-    "Streptococcus zooepidemicus": "szooepidemicus",
-    "Streptomyces": "streptomyces",
-    "Taylorella": "taylorella",
-    "Tenacibaculum": "tenacibaculum",
-    "Treponema pallidum": "tpallidum",
-    "Trichomonas vaginalis": "tvaginalis",
-    "Ureaplasma": "ureaplasma",
-    "Vibrio": "vibrio",
-    "Vibrio cholerae": "vcholerae, vcholerae_2",
-    "Vibrio parahaemolyticus": "vparahaemolyticus",
-    "Vibrio tapetis": "vtapetis",
-    "Vibrio vulnificus ": "vvulnificus",
-    "Wolbachia": "wolbachia",
-    "Xylella fastidiosa": "xfastidiosa",
-    "Yersinia pseudotuberculosis": "ypseudotuberculosis",
-    "Yersinia ruckeri": "yruckeri"
-}
 
 def parse_command_line():
     parser = argparse.ArgumentParser(
@@ -240,31 +93,44 @@ def parse_command_line():
     check_command_line_arguments(args)
     return args
 
-def is_species_valid(species: str) -> bool:
-    for value in _species_options.values():
-        if species in value:
-            return True
+
+def is_fasta_file(file_name: str) -> bool:
+    """Check if file has FASTA extension."""
+    extension = file_name.split('.')[-1]
+    if (
+        extension == 'fasta' or extension == 'fna' or extension == 'ffn' or
+        extension == 'faa' or extension == 'frn' or extension == 'fa'
+    ):
+        return True
     return False
 
+def list_fasta_files(directory: Path) -> list:
+    """Make a list of FASTA files from directory."""
+    documents = os.listdir(directory)
+    fastas = [document for document in documents if is_fasta_file(document)]
+    return fastas
+
 def check_command_line_arguments(args) -> None:
+    species_options = SpeciesOptions()
     if args.command == 'list_sp':
-        for key, value in _species_options.items():
-            print(f"{key}: {value}.", end=" ")
-        print()
+        species_options.print_species_options()
         sys.exit(0)
-    if not Path(args.input).exists():
-        sys.exit(f'Error: {args.input} does not exists')
-    if not Path(args.input).is_file():
-        sys.exit(f'Error: {args.input} is not a file')
+    path_input = Path(args.input)
+    if not path_input.exists():
+        sys.exit(f'Error: {path_input} does not exists.')
+    if not path_input.is_file():
+        sys.exit(f'Error: {path_input} is not a file.')
+    if not is_fasta_file(path_input.name):
+        sys.exit(f'Error: {path_input.name} is not a FASTA file.')
     if not Path(args.outdir).exists():
-        sys.exit(f'Error: {args.outdir} does not exists')
+        sys.exit(f'Error: {args.outdir} does not exists.')
     if not Path(args.outdir).is_dir():
-        sys.exit(f'Error: {args.outdir} is not a directory')
+        sys.exit(f'Error: {args.outdir} is not a directory.')
     if args.method_path and not Path(args.method_path).exists():
-        sys.exit(f'Error: {args.method_path} does not exists')
+        sys.exit(f'Error: {args.method_path} does not exists.')
     if args.method_path and not Path(args.method_path).is_file():
-        sys.exit(f'Error: {args.method_path} is not a file')
-    if not is_species_valid(args.species):
+        sys.exit(f'Error: {args.method_path} is not a file.')
+    if not species_options.is_species_valid(args.species):
         sys.exit(f'Error: {args.species} is not a valid species option.')
 
 def is_single_fasta_file(infile: Path) -> bool:
@@ -282,16 +148,17 @@ def extract_sequence_type_from_json(infile: Path) -> str:
     """Get the sequence type from the json file generated by mlst.py"""
     with open(infile, 'r') as f:
         data = json.load(f)
-    st = data["mlst"]["results"]["sequence_type"]
+    st = data["mlst_cge"]["results"]["sequence_type"]
     return st
 
-def run_mlstyper_single_fasta(
-        input_mlstyper: InputMlstyper, output_path: Path
-    ) -> None:
+def run_mlstyper_single_fasta(input_mlstyper: InputMlstyper) -> None:
     """Run mlst with single fasta sequence."""
     # Get record id.
     record = SeqIO.read(input_mlstyper.infile, 'fasta')
     record_id = record.id
+    # Change the path to infile in the input_mlstyper class. The path is
+    # provided as a list because this is how the mlst script from cge works
+    input_mlstyper.infile = [str(input_mlstyper.infile)]
     # Run mlst.
     mlstyper(input_mlstyper)
     # Get st from data.json.
@@ -299,26 +166,22 @@ def run_mlstyper_single_fasta(
     # Headers for results.csv
     fieldnames = ['id', 'sequence_type']
     # Make csv file with results.
-    with open(output_path / 'results.csv', 'w') as output:
-        writer = csv.DictWriter(output, fieldnames=fieldnames)
+    with open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'w') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerow({'id': record_id, 'sequence_type': st})
     # Delete everything in the tmp folder.
     folder_path = input_mlstyper.tmp_dir / '*'
     subprocess.run(f'rm -rf {folder_path}', shell=True)
 
-def run_mlstyper_multiple_fasta(
-        input_mlstyper: InputMlstyper, output_path: Path
-    ) -> None:
+def run_mlstyper_multiple_fasta(input_mlstyper: InputMlstyper) -> None:
     """Run mlst with a file with multiple fasta sequences."""
     # Save path to infile.
     path_infile = input_mlstyper.infile
-    # Headers for results.csv
-    fieldnames = ['id', 'sequence_type']
     # open results.csv to save results.
-    output = open(output_path / 'results.csv', 'a')
+    output = open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'a')
     # Make a DictWriter object to facilitate saving results.
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer = csv.DictWriter(output, fieldnames=input_mlstyper.csv_fieldnames)
     writer.writeheader()
     # Iterate over fasta sequences.
     for sequence in SeqIO.parse(path_infile, 'fasta'):
@@ -344,6 +207,18 @@ def run_mlstyper_multiple_fasta(
     # Close results.csv
     output.close()
 
+def run_mlstyper_list_fasta(
+        input_mlstyper: InputMlstyper, output_path: Path
+    ) -> None:
+    """Run mlst with a list of FASTA files.
+
+    Each FASTA file in the list must have a single FASTA sequence.
+    """
+    # Save path to directory with FASTA files.
+    path_dir = input_mlstyper.infile
+    # Headers for 
+    ...
+
 
 def get_sequence_types() -> None:
     # Get path to mlst database
@@ -354,23 +229,24 @@ def get_sequence_types() -> None:
     # Get user input
     args = parse_command_line()
     # Path to fasta file
-    infile = args.input
+    infile = Path(args.input)
     # Initialize InputMlstyper
     input_mlstyper = InputMlstyper(
-        infile=args.input,
+        infile=Path(args.input),
         species=args.species,
         database=mlst_db,
         tmp_dir=path_tmp_dir,
         method_path=args.method_path,
-        outdir=path_tmp_dir,
+        outdir_mlstyper=path_tmp_dir,
+        outdir_mlst_runner=Path(args.outdir),
         extented_output=False,
         quiet=True
     )
 
     if is_single_fasta_file(infile):
-        run_mlstyper_single_fasta(input_mlstyper, Path(args.outdir))
+        run_mlstyper_single_fasta(input_mlstyper)
     else:
-        run_mlstyper_multiple_fasta(input_mlstyper, Path(args.outdir))
+        run_mlstyper_multiple_fasta(input_mlstyper)
     print(f'Done!\nYour results are in: {args.outdir}')
 
 if __name__ == "__main__":
