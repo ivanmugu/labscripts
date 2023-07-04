@@ -22,13 +22,10 @@ from labscripts.mlst.mlst_cge import mlstyper
 def parse_command_line():
     parser = argparse.ArgumentParser(
         add_help=False,
-        prog="seqtyper",
+        prog="mlst",
         formatter_class=argparse.RawTextHelpFormatter,
         description="Run mlst with one or more FASTA sequences.",
-        epilog=(
-            "Currently, the script works only with FASTA sequences.\n" +
-            "Get more help by running `mlst run -h` or `mlst list_sp -h`."
-        )
+        epilog="Note:\nCurrently, the script works only with FASTA sequences."
     )
     helper = parser.add_argument_group("Help")
     helper.add_argument(

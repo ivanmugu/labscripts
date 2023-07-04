@@ -1,6 +1,7 @@
 """Utilities for mlst."""
 from pathlib import Path
 from typing import Union
+from pprint import pformat
 
 class SpeciesOptions:
     _species_options = {
@@ -146,7 +147,7 @@ class SpeciesOptions:
         "Vibrio cholerae": "vcholerae, vcholerae_2",
         "Vibrio parahaemolyticus": "vparahaemolyticus",
         "Vibrio tapetis": "vtapetis",
-        "Vibrio vulnificus ": "vvulnificus",
+        "Vibrio vulnificus": "vvulnificus",
         "Wolbachia": "wolbachia",
         "Xylella fastidiosa": "xfastidiosa",
         "Yersinia pseudotuberculosis": "ypseudotuberculosis",
@@ -164,9 +165,11 @@ class SpeciesOptions:
         return False
 
     def print_species_options(self) -> None:
-        for key, value in self.species_options.items():
-            print(f"{key}: {value}.", end=" ")
-        print()
+        options = pformat(self.species_options, indent=0)
+        chars_to_remove = ["{", "}", "'", ","]
+        for char in chars_to_remove:
+            options = options.replace(char, "")
+        print(options)
 
 
 class InputMlstyper:
