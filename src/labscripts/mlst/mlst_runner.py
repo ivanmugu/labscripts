@@ -1,3 +1,8 @@
+"""Module to run mlst from cge.
+
+It can be run using a file with one or more FASTA sequences or a folder
+carrying one or more FASTA sequences.
+"""
 import argparse
 from importlib import resources
 from pathlib import Path
@@ -65,7 +70,7 @@ def parse_command_line():
         # Note: if planning to use reads, include `nargas=+` and do the
         # corresponding changes in the run_mlstyper functions.
         "-i", "--input", required=True,
-        help=("Path to file with FASTA sequence(s).")
+        help=("Path to file or folder with FASTA sequence(s).")
     )
     run_required.add_argument(
         "-s", "--species",
@@ -94,7 +99,7 @@ def parse_command_line():
     return args
 
 
-def is_fasta_file(file_name: str) -> bool:
+def has_fasta_extension(file_name: str) -> bool:
     """Check if file has FASTA extension."""
     extension = file_name.split('.')[-1]
     if (
@@ -104,30 +109,39 @@ def is_fasta_file(file_name: str) -> bool:
         return True
     return False
 
-def list_fasta_files(directory: Path) -> list:
+def mk_list_fasta_files(directory: Path) -> list[Path]:
     """Make a list of FASTA files from directory."""
-    documents = os.listdir(directory)
-    fastas = [document for document in documents if is_fasta_file(document)]
+    docs = os.listdir(directory)
+    fastas = [directory / doc for doc in docs if has_fasta_extension(doc)]
     return fastas
+
+def list_has_fasta_files(files_list: list[Path]) -> bool:
+    """Check if a list of file paths has a FASTA file."""
+    for doc in files_list:
+        if has_fasta_extension(str(doc)):
+            return True
+    return False
 
 def check_command_line_arguments(args) -> None:
     species_options = SpeciesOptions()
     if args.command == 'list_sp':
         species_options.print_species_options()
         sys.exit(0)
-    path_input = Path(args.input)
-    if not path_input.exists():
-        sys.exit(f'Error: {path_input} does not exists.')
-    if not path_input.is_file():
-        sys.exit(f'Error: {path_input} is not a file.')
-    if not is_fasta_file(path_input.name):
-        sys.exit(f'Error: {path_input.name} is not a FASTA file.')
+    if not Path(args.input).exists():
+        sys.exit(f'Error: {args.input} does not exist.')
+    if Path(args.input).is_file() and not has_fasta_extension(args.input):
+        sys.exit(f'Error: {args.input} is not FASTA file.')
+    if Path(args.input).is_dir():
+        # check if folder has fasta files.
+        ls_fasta = mk_list_fasta_files(Path(args.input))
+        if not list_has_fasta_files(ls_fasta):
+            sys.exit(f'Error: {args.input} does not have any FASTA file.')
     if not Path(args.outdir).exists():
-        sys.exit(f'Error: {args.outdir} does not exists.')
+        sys.exit(f'Error: {args.outdir} does not exist.')
     if not Path(args.outdir).is_dir():
         sys.exit(f'Error: {args.outdir} is not a directory.')
     if args.method_path and not Path(args.method_path).exists():
-        sys.exit(f'Error: {args.method_path} does not exists.')
+        sys.exit(f'Error: {args.method_path} does not exist.')
     if args.method_path and not Path(args.method_path).is_file():
         sys.exit(f'Error: {args.method_path} is not a file.')
     if not species_options.is_species_valid(args.species):
@@ -165,6 +179,8 @@ def run_mlstyper_single_fasta(input_mlstyper: InputMlstyper) -> None:
     st = extract_sequence_type_from_json(input_mlstyper.tmp_dir / "data.json")
     # Headers for results.csv
     fieldnames = ['id', 'sequence_type']
+    # Open and close results file to remove any existing file with same name.
+    open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'w').close()
     # Make csv file with results.
     with open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'w') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -178,6 +194,8 @@ def run_mlstyper_multiple_fasta(input_mlstyper: InputMlstyper) -> None:
     """Run mlst with a file with multiple fasta sequences."""
     # Save path to infile.
     path_infile = input_mlstyper.infile
+    # Open and close results file to remove any existing file with same name.
+    open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'w').close()
     # open results.csv to save results.
     output = open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'a')
     # Make a DictWriter object to facilitate saving results.
@@ -207,17 +225,41 @@ def run_mlstyper_multiple_fasta(input_mlstyper: InputMlstyper) -> None:
     # Close results.csv
     output.close()
 
-def run_mlstyper_list_fasta(
-        input_mlstyper: InputMlstyper, output_path: Path
-    ) -> None:
+def run_mlstyper_list_fasta(input_mlstyper: InputMlstyper) -> None:
     """Run mlst with a list of FASTA files.
 
-    Each FASTA file in the list must have a single FASTA sequence.
+    FASTA files with more than one sequence are ignored.
     """
     # Save path to directory with FASTA files.
     path_dir = input_mlstyper.infile
-    # Headers for 
-    ...
+    # Open and close results file to remove any existing file with same name.
+    open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'w').close()
+    # Open file to save results.
+    output = open(input_mlstyper.outdir_mlst_runner / 'results.csv', 'a')
+    # Make a DictWriter object to facilitate saving results.
+    writer = csv.DictWriter(output, fieldnames=input_mlstyper.csv_fieldnames)
+    writer.writeheader()
+    # Iterate over fasta file paths to perform mlst.
+    for fasta in mk_list_fasta_files(path_dir):
+        if not is_single_fasta_file(fasta):
+            continue
+        # Get record id.
+        record_id = SeqIO.read(fasta, 'fasta').id
+        # Change the path to infile in the input_mlstyper class. The path is
+        # provided as a list because this is how the mlst script from cge works
+        input_mlstyper.infile = [str(fasta)]
+        # Run mlst.
+        mlstyper(input_mlstyper)
+        # Get st from data.json
+        st = extract_sequence_type_from_json(
+            input_mlstyper.tmp_dir / 'data.json'
+        )
+        writer.writerow({'id': record_id, 'sequence_type': st})
+        # Empty the tmp folder for the next analysis.
+        folder_path = input_mlstyper.tmp_dir / '*'
+        subprocess.run(f'rm {folder_path}', shell=True)
+    # Close output file.
+    output.close()
 
 
 def get_sequence_types() -> None:
@@ -243,10 +285,12 @@ def get_sequence_types() -> None:
         quiet=True
     )
 
-    if is_single_fasta_file(infile):
+    if input_mlstyper.infile.is_file() and is_single_fasta_file(infile):
         run_mlstyper_single_fasta(input_mlstyper)
-    else:
+    elif input_mlstyper.infile.is_file() and not is_single_fasta_file(infile):
         run_mlstyper_multiple_fasta(input_mlstyper)
+    elif input_mlstyper.infile.is_dir():
+        run_mlstyper_list_fasta(input_mlstyper)
     print(f'Done!\nYour results are in: {args.outdir}')
 
 if __name__ == "__main__":

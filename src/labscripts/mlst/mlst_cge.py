@@ -15,7 +15,7 @@ Sequence Typing of Total Genome Sequenced Bacteria. Clin. Micobiol.
 
 Modified by: Ivan Munoz-Gutierrez (IMG).
 email: ivan.munoz.gutierrez@gmail.com
-All modification are indicated by the IMG innitials.
+All modification are indicated with comments that have the IMG innitials.
 """
 import os, sys, re, time, pprint, io, shutil
 import argparse, subprocess
@@ -304,10 +304,9 @@ def text_table(headers, rows, empty_replace='-'):
    table = ("%s\n"*3)%('*'*(width+2), '\n'.join(table), '='*(width+2))
    return table
 
-# =============================================================================
-# Modified by IMG.
+# -- Modified by IMG ----------------------------------------------------------
 # Create a function to parse command line arguments.
-# =============================================================================
+# -----------------------------------------------------------------------------
 def parse_command_line():
     parser = argparse.ArgumentParser(
         add_help=False,
@@ -424,10 +423,10 @@ def parse_command_line():
     return args
 
 
-# =============================================================================
+# -- Modified by IMG ----------------------------------------------------------
 # Modified by Ivan Munoz Gutierrez
 # The rest of the script is encapsulated in a function called mlstyper.
-# =============================================================================
+# -----------------------------------------------------------------------------
 def mlstyper(input_mlstyper: InputMlstyper) -> None:
     """Main fuction to perform mlst.
 
@@ -443,17 +442,17 @@ def mlstyper(input_mlstyper: InputMlstyper) -> None:
     #TODO what are the clonal complex data used for??
 
     # TODO error handling
-    infile = input_mlstyper.infile
+    infile = input_mlstyper.infile # <- IMG
 
     # Check that outdir is an existing dir...
-    outdir = os.path.abspath(input_mlstyper.outdir_mlstyper)
-    species = input_mlstyper.species
-    database = os.path.abspath(input_mlstyper.database)
+    outdir = os.path.abspath(input_mlstyper.outdir_mlstyper) # <- IMG
+    species = input_mlstyper.species # <- IMG
+    database = os.path.abspath(input_mlstyper.database) # <- IMG
     #creating unique tmp_dir
-    tmp_dir = tempfile.mkdtemp(prefix='tmp_', dir=input_mlstyper.tmp_dir)
+    tmp_dir = tempfile.mkdtemp(prefix='tmp_', dir=input_mlstyper.tmp_dir) # <- IMG
     # Check if method path is executable
-    method_path = input_mlstyper.method_path
-    extented_output = input_mlstyper.extented_output
+    method_path = input_mlstyper.method_path # <- IMG
+    extented_output = input_mlstyper.extented_output # <- IMG
 
     min_cov = 0.6    # args.coverage
     threshold = 0.95 # args.identity
@@ -465,7 +464,7 @@ def mlstyper(input_mlstyper: InputMlstyper) -> None:
 
     config_file = open(database + "/config","r")
 
-    if (input_mlstyper.kma_matrix):
+    if (input_mlstyper.kma_matrix): # <- IMG
         extra_args = "-matrix"
     else:
         extra_args = None
@@ -527,7 +526,7 @@ def mlstyper(input_mlstyper: InputMlstyper) -> None:
     else:
         sys.exit("Input file must be fastq or fasta format, not " + file_format)
 
-    if not input_mlstyper.save_tmp:
+    if not input_mlstyper.save_tmp: # <- IMG
         shutil.rmtree(tmp_dir)
 
     results      = method_obj.results
@@ -569,10 +568,10 @@ def mlstyper(input_mlstyper: InputMlstyper) -> None:
         if file_format == "fastq":
             depth = float(locus_hit["depth"])
         else:
-            depth = input_mlstyper.depth
+            depth = input_mlstyper.depth # <- IMG
 
         # Check for required depth
-        if input_mlstyper.depth > depth:
+        if input_mlstyper.depth > depth: # <- IMG
             continue
 
         # Check for perfect hits
@@ -649,7 +648,7 @@ def mlstyper(input_mlstyper: InputMlstyper) -> None:
             if key in allele_results[locus] or (key == "alternative_hit" and value != {}):
                 allele_results[locus][key] = value
 
-    userinput = {"filename":input_mlstyper.infile, "species":input_mlstyper.species, "organism":organism,"file_format":file_format}
+    userinput = {"filename":input_mlstyper.infile, "species":input_mlstyper.species, "organism":organism,"file_format":file_format} # <- IMG
     run_info = {"date":date, "time":time_}#, "database":{"remote_db":remote_db, "last_commit_hash":head_hash}}
     server_results = {"sequence_type":st, "allele_profile": allele_results,
                                 "nearest_sts":nearest_sts, "notes":note}
@@ -779,11 +778,14 @@ def mlstyper(input_mlstyper: InputMlstyper) -> None:
         table_file.close()
         result_file.close()
 
-    if input_mlstyper.quiet:
+    if input_mlstyper.quiet: # <- IMG
         f.close()
         # redirect stdout to sys.__stdout__
         sys.stdout = sys.__stdout__
 
+# -- Modified by IMG ----------------------------------------------------------
+# Main function.
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     args = parse_command_line()
     input_mlstyper = InputMlstyper(
